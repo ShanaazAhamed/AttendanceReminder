@@ -48,6 +48,7 @@ class DB:
             # print('Error occurred - ', error)
             return False
 
+
       
 if __name__ == "__main__":
     db = DB()
