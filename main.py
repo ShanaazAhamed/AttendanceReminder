@@ -3,17 +3,17 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from os import getenv
-from dotenv import load_dotenv
-
-load_dotenv()
-API_TOKEN = getenv("TOKEN")
+from client.request_handler import _start,_subscribed,_help
+from client.request_handler import _changein,_setin,_changeout,_setout,_addurl,_seturl,_getr
+from client.helper import get_token
 
 
+
+API_TOKEN = get_token()
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(bot, storage=storage)    
 
 class Form(StatesGroup):
     in_time = State()
@@ -21,74 +21,76 @@ class Form(StatesGroup):
     url = State()
 
 
-
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-    greenings = f"Hi {message.chat.username}😎, welcome"
-    prefix = "I will remind you to mark the attendance‼️"
-    subscribe = "Please select /subscribe to subscribe yourself"
-    help = "Please select /help to get help"
-
-    await message.reply(f"{greenings}\n{prefix}\n{subscribe}\n{help}")
+    msg = _start(message.chat.username)
+    await message.reply(msg,parse_mode='html')
 
 
 @dp.message_handler(commands=['subscribe'])
-async def send_welcome(message: types.Message):
-    text = "Successfully subscribed!"
-    await message.reply(text)
+async def subscribed(message: types.Message):
+    msg = _subscribed(message.chat.id)
+    await message.reply(msg,parse_mode='html')
 
 @dp.message_handler(commands=['help'])
-async def send_welcome(message: types.Message):
-    start = f"/start <i>to start conversation</i>\n"
-    subscribe = "/subscribe <i>to subscribe yourself</i>\n"
-    in_time = "/in <i>to set IN time</i>\n"
-    out_time = "/out <i>to set OUT time</i>\n"
-    remaning_time = "/r <i>to get reamaining time</i>\n\n"
-    note = "<i>default time is set as</i>\n\n<code>IN : 8:30PM\nOUT : 5:00PM\nUTC+05:30 Colombo, Sri Lanka</code>"
-    await message.reply(f"{start}{subscribe}{in_time}{out_time}{remaning_time}",parse_mode='html')
+async def help(message: types.Message):
+    msg = _help()
+    await message.reply(msg,parse_mode='html')
 
 
 @dp.message_handler(commands=['in'])
-async def send_welcome(message: types.Message):
-    note = "<i>default time is set as</i>\n\n<code>IN : 8:30PM\nOUT : 5:00PM\nUTC+05:30 Colombo, Sri Lanka</code>"
-    msg = f"please enter time as 12-hour AM/PM format\n<code>8:30AM</code>"
-    await message.reply(note,parse_mode='html')
+async def change_in(message: types.Message):
+    await Form.in_time.set()
+    msg = _changein(message.chat.id)
     await message.reply(msg,parse_mode='html')
 
-@dp.message_handler(state=Form.in_time, regexp='^[A-Z]$')
-async def process_name(message: types.Message, state: FSMContext):
+@dp.message_handler(state=Form.in_time)
+async def set_in(message: types.Message, state: FSMContext):
     await state.finish()
-    chat_id = message.chat.id
-    await message.reply(f"Sucessfully IN time added",parse_mode='html')
-    print(f"IN {message.text}")
+    msg,validation = _setin(message.chat.id, message.text)
+    await message.reply(msg,parse_mode='html')
 
 @dp.message_handler(commands=['out'])
-async def send_welcome(message: types.Message):
-    note = "<i>default time is set as</i>\n\n<code>IN : 8:30PM\nOUT : 5:00PM\nUTC+05:30 Colombo, Sri Lanka</code>"
-    msg = f"please enter time as 12-hour AM/PM format\n<code>5:30PM</code>"
-    await message.reply(note,parse_mode='html')
+async def change_out(message: types.Message):
+    await Form.out.set()
+    msg,validation = _changeout(message.chat.id)
     await message.reply(msg,parse_mode='html')
 
-
-@dp.message_handler(state=Form.out, regexp='^[A-Z]$')
-async def process_name(message: types.Message, state: FSMContext):
+@dp.message_handler(state=Form.out)
+async def set_out(message: types.Message, state: FSMContext):
     await state.finish()
-    chat_id = message.chat.id
-    await message.reply(f"Sucessfully OUT time added",parse_mode='html')
-    print(f"OUT {message.text}")
+    msg = _setout(message.chat.id, message.text)
+    await message.reply(msg,parse_mode='html')
 
 @dp.message_handler(commands=['url'])
-async def send_welcome(message: types.Message):
-    note = "<code>at own risk</code>"
-    await message.reply(note)
+async def add_url(message: types.Message):
+    await Form.url.set()
+    msg = _addurl(message.chat.id)
+    await message.reply(msg,parse_mode='html')
 
-@dp.message_handler(state=Form.url, regexp='^[A-Z]$')
+@dp.message_handler(state=Form.url)
 async def process_name(message: types.Message, state: FSMContext):
     await state.finish()
-    chat_id = message.chat.id
-    await message.reply(f"Sucessfully url added",parse_mode='html')
-    print(f"URL {message.text}")
+    msg = _seturl(message.chat.id, message.text)
+    await message.reply(msg,parse_mode='html')
 
-if __name__ == "__main__":
+# @dp.message_handler(commands=['r'])
+# async def get_remaining(message: types.Message):
+#     msg = _getr(message.chat.id)
+#     await message.reply(msg)
+
+@dp.message_handler()
+async def get_remaining(message: types.Message):
+    msg = "Invalid command\nTry /help"
+    await message.answer(msg)
+
+
+
+def get_credentials():
+    load_dotenv()
+    API_TOKEN = getenv("TOKEN")
+    KEY = getenv("KEY")
+
+
+if __name__ == "__main__": 
     executor.start_polling(dp, skip_updates=True)
-    print('Hello')
