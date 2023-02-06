@@ -58,9 +58,9 @@ class DB:
             for row in cursor:
                 in_times.append(row[0])
                 out_times.append(row[1])
-            return in_times, out_times
+            return list(set(in_times)), list(set(out_times))
         except sqlite3.Error as error:
-            return error
+            return [],[]
 
     def check_id(self, id):
         query = '''SELECT id FROM users WHERE id=?'''
@@ -132,20 +132,35 @@ class DB:
         except sqlite3.Error as error:
             return False
 
-    def get_IdsByTime(self, time):
-        query = '''SELECT id FROM users WHERE in_t = ? OR out_t = ?'''
+    def get_IdsByInTime(self, time):
+        query = '''SELECT id FROM users WHERE in_t = ? '''
         try:
             if validate_time(time):
                 ids = []
                 conn = sqlite3.connect('users.db')
-                cursor = conn.execute(query, [time, time])
+                cursor = conn.execute(query, [time])
                 for row in cursor:
                     ids.append(row[0])
                 if len(ids) != 0:
                     return ids
-            return False
+            return []
         except sqlite3.Error as error:
-            return False
+            return []
+
+    def get_IdsByOutTime(self, time):
+        query = '''SELECT id FROM users WHERE out_t = ? '''
+        try:
+            if validate_time(time):
+                ids = []
+                conn = sqlite3.connect('users.db')
+                cursor = conn.execute(query, [time])
+                for row in cursor:
+                    ids.append(row[0])
+                if len(ids) != 0:
+                    return ids
+            return []
+        except sqlite3.Error as error:
+            return []
 
 
 if __name__ == "__main__":

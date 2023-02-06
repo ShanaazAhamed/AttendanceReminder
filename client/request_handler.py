@@ -123,3 +123,16 @@ def _seturl(id, url):
 def _getr(id):
     msg = "## time remaining"
     return msg
+
+def get_ids(time,method):
+    db = DB()
+    t_validate = validate_time(time)
+    if t_validate:
+        if method.upper() == 'IN':
+            ids = db.get_IdsByInTime(time)
+            return ids
+        else:
+            ids = db.get_IdsByOutTime(time)
+            return ids
+    else:
+        return []

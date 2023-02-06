@@ -15,3 +15,6 @@ def encrypt_text(plain_text, key):
 def decrypt_text(encrypted_text, key):
     f = Fernet(key)
     return f.decrypt(bytes(encrypted_text, "UTF-8")).decode()
+
+if __name__ == "__main__":
+    print(generateKey())
