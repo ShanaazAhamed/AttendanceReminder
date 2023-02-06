@@ -1,7 +1,8 @@
 from client.db import DB
-from client.helper import validate_time,get_key
-from client.encryption import encrypt_text,decrypt_text
+from client.helper import validate_time, get_key
+from client.encryption import encrypt_text, decrypt_text
 from datetime import datetime
+
 
 def _start(username):
     greenings = f"Hi {username}😎, welcome"
@@ -10,6 +11,7 @@ def _start(username):
     _help = "Please select /help to get help"
     return f"{greenings}\n{prefix}\n{subscribe}\n{_help}"
 
+
 def _subscribed(id):
     db = DB()
     IN_t = "8:30AM"
@@ -17,12 +19,11 @@ def _subscribed(id):
     validate = db.check_id(id)
     note = "<i>default time is set as,</i>\n<code>IN : 8:30PM\nOUT : 5:00PM\nUTC+05:30 Colombo, Sri Lanka</code>"
     if not validate:
-        data = {"id":id,"in_t":IN_t,"out_t":OUT_t,"url":""}
+        data = {"id": id, "in_t": IN_t, "out_t": OUT_t, "url": ""}
         res = db.insert_data(data)
         if res:
             return f"Successfully subscribed!\m\n{note}"
     return "Already subscribed!"
-    
 
 
 def _help():
@@ -36,6 +37,7 @@ def _help():
     note = "<i>\nDefault time is set as,</i>\n<code>IN : 8:30PM\nOUT : 5:00PM\nUTC+05:30 Colombo, Sri Lanka</code>"
     return f"{start}{subscribe}{in_time}{out_time}{url}{note}"
 
+
 def _changein(id):
     msg = "Please enter time as 12-hour AM/PM format\n<code>Eg: 8:30AM</code>"
     # note = "<i>Default time is set as,</i>\n<code>IN : 8:30PM\nOUT : 5:00PM\nUTC+05:30 Colombo, Sri Lanka</code>"
@@ -48,15 +50,17 @@ def _changein(id):
             msg += f"\n\nYour previous IN time: {in_t}"
     return f"{msg}"
 
-def _setin(id,time):
+
+def _setin(id, time):
     db = DB()
     id_validate = db.check_id(id)
     t_validate = validate_time(time)
     if id_validate and t_validate:
         res = db.update_intime(id, time)
         if res:
-           return  "Sucessfully `IN` time updated",True
-    return "Coudn't update the time",False
+            return "Sucessfully `IN` time updated", True
+    return "Coudn't update the time", False
+
 
 def _changeout(id):
     msg = "Please enter time as 12-hour AM/PM format\n<code>Eg: 5:00PM</code>"
@@ -70,15 +74,17 @@ def _changeout(id):
             msg += f"\n\nYour previous `OUT` time: {out_t}"
     return f"{msg}"
 
-def _setout(id,time):
+
+def _setout(id, time):
     db = DB()
     id_validate = db.check_id(id)
     t_validate = validate_time(time)
     if id_validate and t_validate:
         res = db.update_outtime(id, time)
         if res:
-           return  "Sucessfully `OUT` time updated",True
-    return "Coudn't update the time",False
+            return "Sucessfully `OUT` time updated", True
+    return "Coudn't update the time", False
+
 
 def _addurl(id):
     msg = "Your data is encrypted\nPlease enter the url:"
@@ -94,10 +100,11 @@ def _addurl(id):
             except:
                 return "Error Occurs"
             msg += f"\n\nYour previous url: {durl}"
-    
+
     return msg+'\n\n*<code>Privacy at your own risk</code>*'
 
-def _seturl(id,url):
+
+def _seturl(id, url):
     db = DB()
     id_validate = db.check_id(id)
     if id_validate:
@@ -106,11 +113,12 @@ def _seturl(id,url):
             encypted = encrypt_text(url, key)
         except:
             return "Coudn't add the url"
-        
-        res = db.update_url(id,encypted)
+
+        res = db.update_url(id, encypted)
         if res:
-           return  "Url is sucessfully added!"
+            return "Url is sucessfully added!"
     return "Coudn't add the url"
+
 
 def _getr(id):
     msg = "## time remaining"

@@ -1,4 +1,5 @@
 import logging
+import threading
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -6,14 +7,15 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from client.request_handler import _start,_subscribed,_help
 from client.request_handler import _changein,_setin,_changeout,_setout,_addurl,_seturl,_getr
 from client.helper import get_token
-
+from datetime import date
 
 
 API_TOKEN = get_token()
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)    
+dp = Dispatcher(bot, storage=storage) 
+IN_t,OUT_t = [],[]
 
 class Form(StatesGroup):
     in_time = State()
@@ -84,13 +86,26 @@ async def get_remaining(message: types.Message):
     msg = "Invalid command\nTry /help"
     await message.answer(msg)
 
-
-
 def get_credentials():
     load_dotenv()
     API_TOKEN = getenv("TOKEN")
     KEY = getenv("KEY")
 
+def start_telegram():
+    executor.start_polling(dp, skip_updates=True)
+
+def start_shedule():
+    global IN_t,OUT_t
+    today = date.today().weekday()
+    if today != 5 and today != 6:
+        timestamp = time.strftime("%I:%M%p")
+        print(timestamp)
+
+
+
 
 if __name__ == "__main__": 
-    executor.start_polling(dp, skip_updates=True)
+    t1 = threading.Thread(target=start_telegram)
+    t2 = threading.Thread(target=start_shedule)
+    t1.start()
+    t2.start()

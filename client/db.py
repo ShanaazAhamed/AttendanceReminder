@@ -2,6 +2,7 @@ import sqlite3
 import io
 from client.helper import validate_time
 
+
 class DB:
 
     def create_tale(self):
@@ -28,24 +29,24 @@ class DB:
 
     def backup_data(self):
         conn = sqlite3.connect('users.db')
-        with io.open('backupdatabase_dump.sql', 'w') as p: 
-            for line in conn.iterdump():    
+        with io.open('backupdatabase_dump.sql', 'w') as p:
+            for line in conn.iterdump():
                 p.write('%s\n' % line)
         conn.close()
 
-    def insert_data(self,data_dict):
+    def insert_data(self, data_dict):
         query = '''INSERT INTO users (id,in_t,out_t,url)
                 VALUES (?,?,?,?);'''
         try:
             conn = sqlite3.connect('users.db')
-            conn.execute(query, [str(data_dict['id']),data_dict['in_t'],data_dict['out_t'],data_dict['url']])
+            conn.execute(query, [
+                         str(data_dict['id']), data_dict['in_t'], data_dict['out_t'], data_dict['url']])
             conn.commit()
             conn.close()
             return True
-                
+
         except sqlite3.Error as error:
             return False
-
 
     def get_times(self):
         query = '''SELECT in_t,out_t FROM users;'''
@@ -57,15 +58,15 @@ class DB:
             for row in cursor:
                 in_times.append(row[0])
                 out_times.append(row[1])
-            return in_times,out_times
+            return in_times, out_times
         except sqlite3.Error as error:
             return error
 
-    def check_id(self,id):
+    def check_id(self, id):
         query = '''SELECT id FROM users WHERE id=?'''
         try:
             conn = sqlite3.connect('users.db')
-            cursor = conn.execute(query,[str(id)])
+            cursor = conn.execute(query, [str(id)])
             for row in cursor:
                 if row != None:
                     return True
@@ -73,81 +74,80 @@ class DB:
         except sqlite3.Error as error:
             return False
 
-
-    def update_intime(self,id,time):
+    def update_intime(self, id, time):
         query = '''UPDATE users SET in_t = ? WHERE id = ?;'''
         try:
             if self.check_id(id) and validate_time(time):
                 conn = sqlite3.connect('users.db')
-                conn.execute(query, [time,str(id)])
+                conn.execute(query, [time, str(id)])
                 conn.commit()
                 conn.close()
                 return True
             else:
                 return False
-           
+
         except sqlite3.Error as error:
             return False
 
-    def update_outtime(self,id,time):
+    def update_outtime(self, id, time):
         query = '''UPDATE users SET out_t = ? WHERE id = ?;'''
         try:
             if self.check_id(id) and validate_time(time):
                 conn = sqlite3.connect('users.db')
-                conn.execute(query, [time,str(id)])
+                conn.execute(query, [time, str(id)])
                 conn.commit()
                 conn.close()
                 return True
             else:
                 return False
-           
+
         except sqlite3.Error as error:
             return False
-    
-    def update_url(self,id,url):
+
+    def update_url(self, id, url):
         query = '''UPDATE users SET url = ? WHERE id = ?;'''
         try:
             if self.check_id(id):
                 conn = sqlite3.connect('users.db')
-                conn.execute(query, [url,str(id)])
+                conn.execute(query, [url, str(id)])
                 conn.commit()
                 conn.close()
                 return True
             else:
                 return False
-           
+
         except sqlite3.Error as error:
             return False
-    
-    def get_detialsById(self,id):
+
+    def get_detialsById(self, id):
         query = '''SELECT * FROM users WHERE id=?'''
         try:
             if self.check_id(id):
                 conn = sqlite3.connect('users.db')
-                cursor = conn.execute(query,[str(id)])
+                cursor = conn.execute(query, [str(id)])
                 for row in cursor:
                     if row != None:
-                        return {"id":row[0],"in_time":row[1],"out_time":row[2],"url":row[3]}
+                        return {"id": row[0], "in_time": row[1], "out_time": row[2], "url": row[3]}
             return False
         except sqlite3.Error as error:
             return False
 
-    def get_IdsByTime(self,time):
+    def get_IdsByTime(self, time):
         query = '''SELECT id FROM users WHERE in_t = ? OR out_t = ?'''
         try:
             if validate_time(time):
                 ids = []
                 conn = sqlite3.connect('users.db')
-                cursor = conn.execute(query,[time,time])
+                cursor = conn.execute(query, [time, time])
                 for row in cursor:
-                    ids.append(row[0])      
+                    ids.append(row[0])
                 if len(ids) != 0:
                     return ids
             return False
         except sqlite3.Error as error:
             return False
 
-      
+
 if __name__ == "__main__":
     db = DB()
     # db.create_tale()
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     # res4 = db.insert_data(data_dict = {"id":"1114","in_t":'8:30AM',"out_t":"5:00PM","url":"www.wss.com"})
     # res5 = db.insert_data(data_dict = {"id":"1113","in_t":'8:30AM',"out_t":"5:00PM","url":"www.wss.com"})
     # res2 = db.insert_data(data_dict = {"id":"1115","in_t":'8:30AM',"out_t":"5:00PM","url":"www.wss.com"})
-    # db.backup_data()            
+    # db.backup_data()
     # print(db.get_times())
     # print(db.update_intime(1116, '8:00AM'))
     # print(db.get_detialsById(1115))
