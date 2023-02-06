@@ -24,6 +24,7 @@ def _subscribed(id):
     return "Already subscribed!"
     
 
+
 def _help():
     start = f"/start <i>to start conversation</i>\n"
     subscribe = "/subscribe <i>to subscribe yourself</i>\n"
