@@ -16,6 +16,11 @@ def validate_time(time):
     except:
         return False
 
+def formattime(timestamp):
+    if int(timestamp[0]) == 0:
+        timestamp = timestamp[1:]
+    return timestamp
+
 
 def convert24(time):
     t = datetime.strptime(time, '%I:%M%p')

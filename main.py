@@ -1,16 +1,15 @@
 import logging
-import threading
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from client.request_handler import _start, _subscribed, _help,get_ids
+from client.request_handler import _start, _subscribed, _help, get_ids
 from client.request_handler import _changein, _setin, _changeout, _setout, _addurl, _seturl, _getr
-from client.helper import get_token
+from client.helper import get_token, formattime
 from client.db import DB
 
-from datetime import date
-import time
+from datetime import date, datetime
+from pytz import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 
 API_TOKEN = get_token()
@@ -18,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
-IN_t, OUT_t = ["8:30AM"], ["5:00PM"]
+IN_t, OUT_t = [], []
 
 
 class Form(StatesGroup):
@@ -54,12 +53,12 @@ async def change_in(message: types.Message):
 
 @dp.message_handler(state=Form.in_time)
 async def set_in(message: types.Message, state: FSMContext):
-    global IN_t,OUT_t
+    global IN_t, OUT_t
     await state.finish()
     msg, validation = _setin(message.chat.id, message.text)
     if validation:
         db = DB()
-        IN_t,OUT_t = db.get_times()
+        IN_t, OUT_t = db.get_times()
     await message.reply(msg, parse_mode='html')
     # print("1-i",IN_t)
 
@@ -73,12 +72,12 @@ async def change_out(message: types.Message):
 
 @dp.message_handler(state=Form.out)
 async def set_out(message: types.Message, state: FSMContext):
-    global IN_t,OUT_t
+    global IN_t, OUT_t
     await state.finish()
-    msg,validation = _setout(message.chat.id, message.text)
+    msg, validation = _setout(message.chat.id, message.text)
     if validation:
         db = DB()
-        IN_t,OUT_t = db.get_times()
+        IN_t, OUT_t = db.get_times()
     await message.reply(msg, parse_mode='html')
     # print("1-o",OUT_t)
 
@@ -108,40 +107,39 @@ async def get_remaining(message: types.Message):
     await message.answer(msg)
 
 
-def get_credentials():
-    load_dotenv()
-    API_TOKEN = getenv("TOKEN")
-    KEY = getenv("KEY")
-
-async def send_message(ids,METHOD):
+async def send_message(ids, METHOD):
     msg = f'Please mark {METHOD}'
     print("Message sent!")
     for id in ids:
         await bot.send_message(id, msg)
 
+
+def retrievtimes():
+    db = DB()
+    IN_t, OUT_t = db.get_times()
+    return IN_t, OUT_t
+
+
 def start_shedule():
     global IN_t, OUT_t
+    IN_t, OUT_t = retrievtimes()
     today = date.today().weekday()
     if today != 5 and today != 6:
-        timestamp = time.strftime('%I:%M%p')
-        if int(timestamp[0]) == 0:
-            timestamp = timestamp[1:]
+        timestamp = datetime.now(timezone('Asia/Colombo')).strftime('%I:%M%p')
+        timestamp = formattime(timestamp)
         if timestamp in IN_t:
-            method  = "IN"
-            print(method)
-            ids = get_ids(time, method)
+            method = "IN"
+            ids = get_ids(timestamp, method)
             send_message(ids, method)
 
         elif timestamp in OUT_t:
             method = "OUT"
-            ids = get_ids(time, method)
+            ids = get_ids(timestamp, method)
             send_message(ids, method)
 
 
-
-if __name__ == "__main__":    
+if __name__ == "__main__":
     sched = BackgroundScheduler()
-    sched.add_job(start_shedule, 'interval', seconds = 10)
+    sched.add_job(start_shedule, 'interval', seconds=10)
     sched.start()
     executor.start_polling(dp, skip_updates=True)
-    
