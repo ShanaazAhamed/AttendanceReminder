@@ -16,7 +16,9 @@ def validate_time(time):
     except:
         return False
 
+
 def formattime(timestamp):
+    '''Remove leading zero'''
     if int(timestamp[0]) == 0:
         timestamp = timestamp[1:]
     return timestamp

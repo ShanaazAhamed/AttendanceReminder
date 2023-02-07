@@ -79,7 +79,6 @@ async def set_out(message: types.Message, state: FSMContext):
         db = DB()
         IN_t, OUT_t = db.get_times()
     await message.reply(msg, parse_mode='html')
-    # print("1-o",OUT_t)
 
 
 @dp.message_handler(commands=['url'])
