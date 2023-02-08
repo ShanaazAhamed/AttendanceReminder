@@ -1,4 +1,4 @@
-import logging
+from logging import basicConfig,INFO
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -11,14 +11,14 @@ from client.db import DB
 from datetime import date, datetime
 from pytz import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
+from asyncio import run
 
 API_TOKEN = get_token()
-logging.basicConfig(level=logging.INFO)
+basicConfig(level=INFO)
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 IN_t, OUT_t = [], []
-
 
 class Form(StatesGroup):
     in_time = State()
@@ -53,14 +53,14 @@ async def change_in(message: types.Message):
 
 @dp.message_handler(state=Form.in_time)
 async def set_in(message: types.Message, state: FSMContext):
-    global IN_t, OUT_t
     await state.finish()
-    msg, validation = _setin(message.chat.id, message.text)
-    if validation:
-        db = DB()
-        IN_t, OUT_t = db.get_times()
+    time = formattime(message.text)
+    msg = "Invalid Time!"
+    if time != False:
+        msg, validation = _setin(message.chat.id,time)
+
     await message.reply(msg, parse_mode='html')
-    # print("1-i",IN_t)
+
 
 
 @dp.message_handler(commands=['out'])
@@ -72,12 +72,12 @@ async def change_out(message: types.Message):
 
 @dp.message_handler(state=Form.out)
 async def set_out(message: types.Message, state: FSMContext):
-    global IN_t, OUT_t
     await state.finish()
-    msg, validation = _setout(message.chat.id, message.text)
-    if validation:
-        db = DB()
-        IN_t, OUT_t = db.get_times()
+    time = formattime(message.text)
+    msg = "Invalid Time!"
+    if time != False:
+        msg, validation = _setout(message.chat.id, time)
+
     await message.reply(msg, parse_mode='html')
 
 
@@ -108,9 +108,14 @@ async def get_remaining(message: types.Message):
 
 async def send_message(ids, METHOD):
     msg = f'Please mark {METHOD}'
+    operator = Bot(API_TOKEN)
     print("Message sent!")
-    for id in ids:
-        await bot.send_message(id, msg)
+    try:
+        for id in ids:
+            await operator.send_message(id, msg)
+        await operator.close()
+    except:
+        pass
 
 
 def retrievtimes():
@@ -119,22 +124,23 @@ def retrievtimes():
     return IN_t, OUT_t
 
 
+def message_sender(timestamp, method):
+    ids = get_ids(timestamp, method)
+    run(send_message(ids, method))
+
+
 def start_shedule():
     global IN_t, OUT_t
     IN_t, OUT_t = retrievtimes()
     today = date.today().weekday()
     if today != 5 and today != 6:
-        timestamp = datetime.now(timezone('Asia/Colombo')).strftime('%I:%M%p')
-        timestamp = formattime(timestamp)
+        timestamp = formattime(datetime.now(
+            timezone('Asia/Colombo')).strftime('%I:%M%p'))
+        print(IN_t, OUT_t)
         if timestamp in IN_t:
-            method = "IN"
-            ids = get_ids(timestamp, method)
-            send_message(ids, method)
-
+            message_sender(timestamp, "IN")
         elif timestamp in OUT_t:
-            method = "OUT"
-            ids = get_ids(timestamp, method)
-            send_message(ids, method)
+            message_sender(timestamp, "OUT")
 
 
 if __name__ == "__main__":

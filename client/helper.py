@@ -17,11 +17,19 @@ def validate_time(time):
         return False
 
 
-def formattime(timestamp):
+def formattime(time):
     '''Remove leading zero'''
-    if int(timestamp[0]) == 0:
-        timestamp = timestamp[1:]
-    return timestamp
+    try:
+        h, r = time.split(':')
+        mins = r[:2]
+        am_pm = r[2:]
+        if int(h[0]) == 0:
+            h = h[1:]
+        am_pm = am_pm.upper().strip()
+        time = h+":"+mins+am_pm
+        return time.strip()
+    except:
+        return False
 
 
 def convert24(time):
